@@ -1050,7 +1050,7 @@ def transform_to_generic_wrapper(tree, types, callbacks, constructors,
      * Update of subroutine uses clauses
     """
 
-    tree = OnlyAndSkip(only_subs, only_mods).visit(tree)
+#    tree = OnlyAndSkip(only_subs, only_mods).visit(tree)
     tree = remove_private_symbols(tree)
     tree = UnwrappablesRemover(callbacks, types, constructors,
                                destructors, remove_optional_arguments).visit(tree)

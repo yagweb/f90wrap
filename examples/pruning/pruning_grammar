@@ -1,0 +1,15 @@
+type p3:
+    private *
+public p3
+    
+top:
+    private p1, p2
+    public p1, p2
+    
+module test -> mod1:
+ #item2
+    public p2 #item1
+    type p3 -> type1:
+        public p55, p33,\
+        123
+        private *

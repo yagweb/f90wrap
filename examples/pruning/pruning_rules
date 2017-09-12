@@ -1,0 +1,26 @@
+private p.*, t.*
+
+top:
+    private prog.*
+    
+module library:
+    public p.*
+    #do_array_stuff, only_manipulate, return_array
+    private do_array_stuff, only_manipulate
+
+module parameters:    
+    #idp, isp
+    private *
+    public idp
+    
+module module_calcul -> mc:
+    private recup_point
+    public p.*
+    type type_ptmes -> tp:
+        private *
+        public y
+#    type array_type:
+#        private x
+
+#private array_type
+private library

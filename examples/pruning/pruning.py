@@ -150,18 +150,33 @@ def test_generator(files):
     fwrap.F90WrapperGenerator(prefix, fsize, string_lengths,
                               abort_func, kind_map, types, default_to_inout).visit(f90_tree)
     
-def compile_(files):
+def compile_lib(files):
+    obj_files = [os.path.splitext(os.path.basename(bb))[0]+".o" for bb in files]
+    f90 = r'"C:\Program Files\mingw-w64\x86_64-7.1.0-posix-seh-rt_v5-rev0\mingw64\bin\gfortran.exe"'
+    f90 = r'gfortran'
+    for src, obj in zip(files, obj_files): 
+        cmd = "%s -m64 -x f95-cpp-input -fPIC -c %s -o %s" % (f90, src, obj)
+        print(cmd)
+        os.system(cmd)
+    cmd = "ar -rcs libsrc.a %s" % (" ".join(obj_files))
+    print(cmd)
+    os.system(cmd)
+        
+def compile_ext():
     import glob
     import platform
     sysstr = platform.system()
     if(sysstr == "Windows"):
-        files.extend(glob.glob('f90wrap_*.f90'))#windows cmd not support wildcard
+        files = glob.glob('f90wrap_*.f90')#windows cmd not support wildcard
+        cc = '--compiler=mingw32'
     else:
         files = 'f90wrap_*.f90'
+        cc = ''
     mod_name = "demo"
     f2py = os.path.abspath("../../scripts/f2py-f90wrap")
-    cmd = "python {f2py} --fcompiler=gfortran ".format(f2py = f2py) + \
-    "--build-dir . -c -m {mod_name} -L. {files}".format(mod_name = mod_name, files = " ".join(files))
+    # --compiler=mingw32  #symbol table not found
+    cmd = "python {f2py} {cc} --fcompiler=gfortran --verbose ".format(f2py = f2py, cc = cc) + \
+    "--build-dir . -c -m {mod_name} -L. -lsrc {files}".format(mod_name = mod_name, files = " ".join(files))
     print(cmd)
     os.system(cmd)
     
@@ -172,5 +187,6 @@ if __name__ == "__main__":
              '../arrays/parameters.f90',
              '../arrays/library.f90',
             ]
+#    compile_lib(files)
 #    test_generator(files)
-    compile_(files)
+    compile_ext()

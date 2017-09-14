@@ -40,6 +40,7 @@ import string
 from f90wrap.fortran import *
 
 # Define some regular expressions
+pat_identifier = re.compile(r'^\w+')
 
 module = re.compile('^module', re.IGNORECASE)
 module_end = re.compile('^end\s*module|end$', re.IGNORECASE)
@@ -79,7 +80,7 @@ prototype = re.compile(r'^module procedure ([a-zA-Z0-9_,\s]*)')
 contains = re.compile('^contains', re.IGNORECASE)
 
 uses = re.compile('^use\s+', re.IGNORECASE)
-only = re.compile('only\s*:\s*', re.IGNORECASE)
+only = re.compile('^,\s*only\s*:', re.IGNORECASE)
 
 decl = re.compile('^(' + types + r')\s*(,\s*(' + attribs + r')\s*)*(::)?\s*\w+(\s*,\s*\w+)*', re.IGNORECASE)
 d_colon = re.compile('::')
@@ -112,6 +113,13 @@ valid_dim_re = re.compile(r'^(([-0-9.e]+)|(size\([_a-zA-Z0-9\+\-\*\/]*\))|(len\(
 public = re.compile('(^public$)|(^public\s*(\w+)\s*$)|(^public\s*::\s*(\w+)(\s*,\s*\w+)*$)', re.IGNORECASE)
 private = re.compile('(^private$)|(^private\s*(\w+)\s*$)|(^private\s*::\s*(\w+)(\s*,\s*\w+)*$)', re.IGNORECASE)
 
+def read_identifier(content):
+    temp = re.match(pat_identifier, content)
+    if not temp:
+        return None, content
+    identifier = content[:temp.span()[1]]
+    content = content[temp.span()[1]:].strip()
+    return identifier, content
 
 def remove_delimited(line, d1, d2):
     bk = 0
@@ -283,12 +291,26 @@ def check_uses(cline, file):
     if re.match(uses, cline) != None:
         cline = uses.sub('', cline)
         cline = cline.strip()
-        out = re.match(re.compile(r"\w+"), cline).group()
+        out, cline = read_identifier(cline)
+        onlys = check_only(cline)
         cline = file.next()
-        return [out, cline]
+        return [out, onlys, cline]
     else:
-        return [None, cline]
+        return [None, None, cline]
 
+
+def check_only(cline):
+    res = {}
+    if re.match(only, cline) != None:
+        cline = only.sub('', cline)
+        items = cline.split(",")
+        for item in items:
+            temp = item.split("=>")
+            if len(temp) == 2:
+                res[temp[0].strip()] = temp[1].strip()
+#            else:
+                #temp.strip() discard directly
+    return res
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -367,7 +389,7 @@ def check_program(cl, file):
                 check = check_uses(cl, file)
                 if check[0] != None:
                     out.uses.append(check[0])
-                    cl = check[1]
+                    cl = check[2]
                     continue
 
                 # Doc comment
@@ -458,7 +480,7 @@ def check_module(cl, file):
                 check = check_uses(cl, file)
                 if check[0] != None:
                     out.uses.append(check[0])
-                    cl = check[1]
+                    cl = check[2]
                     continue
 
                 # Doc comment
@@ -653,7 +675,7 @@ def check_subt(cl, file, grab_hold_doc=True):
             # #check=check_uses(cl,file)
             # #if check[0]!=None:
             # #    out.uses.append(check[0])
-            # #    cl=check[1]
+            # #    cl=check[2]
             # #    continue
 
             # Look for block comments starting with a line of ======= or -------
@@ -854,7 +876,7 @@ def check_funct(cl, file, grab_hold_doc=True):
             # #check=check_uses(cl,file)
             # #if check[0]!=None:
             # #    out.uses.append(check[0])
-            # #    cl=check[1]
+            # #    cl=check[2]
             # #    continue
 
             # Look for block comments starting with a line of ======= or -------

@@ -65,9 +65,9 @@ class F90WrapperGenerator(ft.FortranVisitor, cg.CodeGenerator):
     """
 
     def __init__(self, prefix, sizeof_fortran_t, string_lengths, abort_func,
-                 kind_map, types, default_to_inout):
+                 kind_map, types, default_to_inout, dest = '.'):
         cg.CodeGenerator.__init__(self, indent=' ' * 4,
-                                  max_length=80,
+                                  max_length=156,
                                   continuation='&',
                                   comment='!')
         ft.FortranVisitor.__init__(self)
@@ -78,6 +78,14 @@ class F90WrapperGenerator(ft.FortranVisitor, cg.CodeGenerator):
         self.kind_map = kind_map
         self.types = types
         self.default_to_inout = default_to_inout
+        self.dest = os.path.abspath(dest)
+        if not os.path.exists(dest):
+            os.mkdir(dest)
+    
+    def open_file(self, name, mode):
+        path = os.path.join(self.dest, name)
+        _file = open(path, mode)
+        return _file        
 
     def visit_Root(self, node):
         """
@@ -91,12 +99,15 @@ class F90WrapperGenerator(ft.FortranVisitor, cg.CodeGenerator):
                              [top_level_wrapper_file])
 
         for f90_wrapper_file in f90_wrapper_files:
-            if os.path.exists(f90_wrapper_file):
-                os.unlink(f90_wrapper_file)
+            temp = os.path.join(self.dest, f90_wrapper_file)
+            if os.path.exists(temp):
+                os.unlink(temp)
+                if f90_wrapper_file != top_level_wrapper_file:
+                    open(temp, 'w').close()  #clear
         self.code = []
         self.generic_visit(node)
         if len(self.code) > 0:
-            f90_wrapper_file = open(top_level_wrapper_file, 'w')
+            f90_wrapper_file = self.open_file(top_level_wrapper_file, 'w')
             f90_wrapper_file.write(str(self))
             f90_wrapper_file.close()
 
@@ -128,7 +139,7 @@ class F90WrapperGenerator(ft.FortranVisitor, cg.CodeGenerator):
             f90_wrapper_name = '%s%s.f90' % (self.prefix, os.path.splitext(os.path.basename(node.filename))[0])
             if os.path.exists(f90_wrapper_name):
                 warnings.warn('Source file %s contains code for more than one module!' % node.filename)
-            f90_wrapper_file = open(f90_wrapper_name, 'a')
+            f90_wrapper_file = self.open_file(f90_wrapper_name, 'a')
             f90_wrapper_file.write(str(self))
             f90_wrapper_file.close()
         self.code = []
@@ -166,10 +177,18 @@ class F90WrapperGenerator(ft.FortranVisitor, cg.CodeGenerator):
                     all_uses[mod] = list(only)
                 else:
                     all_uses[mod] = None
+                    
+        def get_name(name):
+            if '=>' in name or \
+                 name == node.name and (isinstance(node, ft.Function) or isinstance(node, ft.Subroutine)):
+                return name
+            else:
+                return  'type_%s=>%s' %(name, name)
 
         for mod, only in all_uses.items():
             if only is not None:
-                self.write('use %s, only: %s' % (mod, ', '.join(set(only))))  # YANN: "set" to avoid derundancy
+                temp = [get_name(bb) for bb in set(only)]  # YANN: "set" to avoid derundancy
+                self.write('use %s, only: %s' % (mod, ', '.join(temp)))
             else:
                 self.write('use %s' % mod)
 
@@ -193,7 +212,7 @@ class F90WrapperGenerator(ft.FortranVisitor, cg.CodeGenerator):
         """
         tname = ft.strip_type(tname)
         self.write("""type %(typename)s_ptr_type
-    type(%(typename)s), pointer :: p => NULL()
+    type(type_%(typename)s), pointer :: p => NULL()
 end type %(typename)s_ptr_type""" % {'typename': tname})
 
     def write_arg_decl_lines(self, node):

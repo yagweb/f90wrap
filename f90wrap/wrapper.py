@@ -88,6 +88,8 @@ USAGE
         parser.add_argument('-V', '--version', action='version', version=program_version_message)
 
         parser.add_argument("files", nargs="+", help="The files to include in the wrap")
+        parser.add_argument("--pydest", default=".", help="folder to store python files generated")
+        parser.add_argument("--fdest", default=".", help="folder to store fortran files generated")
         parser.add_argument('-p', '--prefix',
                             help="""Prefix to prepend to arguments and subroutines.""",
                             default='f90wrap_')
@@ -233,12 +235,18 @@ USAGE
 
         # parse input Fortran source files
         print('Parsing Fortran source files %r ...' % args.files)
+        files_not_found = [file for file in args.files if not os.path.exists(file)]
+        if len(files_not_found) != 0:
+            raise Exception("source file '%s' not exist" % (','.join(files_not_found)))
         parse_tree = fparse.read_files(args.files)
         print('done parsing source.')
         print()
         tree = copy.deepcopy(parse_tree)
         
         if rule and len(rule) != 0:
+            files_not_found = [file for file in rule if not os.path.exists(file)]
+            if len(files_not_found) != 0:
+                raise Exception("pruning rule file '%s' not exist" % (','.join(files_not_found)))
             tree = prune(tree, rule)
 
         types = fortran.find_types(tree)
@@ -292,9 +300,11 @@ USAGE
                                       kind_map=kind_map,
                                       init_file=args.init_file,
                                       py_mod_names=py_mod_names,
-                                      class_names=class_names).visit(py_tree)
+                                      class_names=class_names,
+                                      dest = pydest).visit(py_tree)
         fwrap.F90WrapperGenerator(prefix, fsize, string_lengths,
-                                  abort_func, kind_map, types, default_to_inout).visit(f90_tree)
+                                  abort_func, kind_map, types, default_to_inout,
+                                  dest = fdest).visit(f90_tree)
         return 0
 
     except KeyboardInterrupt:

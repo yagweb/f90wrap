@@ -98,18 +98,21 @@ class Filter(object):
         action(rule)
     def _keyword_top(self, rule):
         self.root._update_by_compound_rule(rule)
+
     def _keyword_module(self, rule):
         item = self._cache_modules.get(rule.name)
         if not item:
             raise Exception("type '%s' not exist, file '%s' line_no %d" % \
                             (rule.name, rule.path, rule.line_no))
-        item.add_module(rule)    
+        item.add_module(rule)
+
     def _keyword_type(self, rule):
         item = self._cache_types.get(rule.name)
         if not item:
             raise Exception("type '%s' not exist, file '%s' line_no %d" % \
                             (rule.name, rule.path, rule.line_no))
-        item.add_type(rule)     
+        item.add_type(rule)
+
     def _keyword_add(self, rule):
         for name in rule.identifiers:
             if name in self.add_actions:
@@ -120,6 +123,7 @@ class Filter(object):
                 raise Exception("member '%s' not exists, file '%s', line_no %d" %\
                                 (name, rule.path, rule.line_no))
             item.add()
+
     def _keyword_remove(self, rule):
         for name in rule.identifiers:
             if name in self.remove_actions:
@@ -129,42 +133,56 @@ class Filter(object):
             if not item:
                 raise Exception("member '%s' not exists, file '%s', line_no %d" %\
                                 (name, rule.path, rule.line_no))
-            item.remove()
+            item.remove()            
+
     def _add_all(self):
         for item in self.all_tree_nodes:
             item._add_all()
+
     def _add_all_modules(self):
         self.root._add_all_modules()
+
     def _add_all_programs(self):
         self.root._add_all_programs()
+
     def _add_all_elements(self):
         for item in self.all_tree_nodes:
             item._add_all_elements()
+
     def _add_all_procedures(self):
         for item in self.all_tree_nodes:
             item._add_all_procedures()
+
     def _add_all_interfaces(self):
         for item in self.all_tree_nodes:
             item._add_all_interfaces()
+
     def _add_all_types(self):
         for item in self.all_tree_nodes:
             item._add_all_types()
+
     def _remove_all(self):
         for item in self.all_tree_nodes:
             item._remove_all()
+
     def _remove_all_modules(self):
         self.root._remove_all_modules()
+
     def _remove_all_programs(self):
         self.root._remove_all_programs()
+
     def _remove_all_elements(self):
         for item in self.all_tree_nodes:
             item._remove_all_elements()
+
     def _remove_all_procedures(self):
         for item in self.all_tree_nodes:
             item._remove_all_procedures()
+
     def _remove_all_interfaces(self):
         for item in self.all_tree_nodes:
             item._remove_all_interfaces()
+
     def _remove_all_types(self):
         for item in self.all_tree_nodes:
             item._remove_all_types()
@@ -174,16 +192,20 @@ class FilterItem(object):
         self.node = node
         #the pruning_node the node belongs to
         self.pruning_node = pruning_node
+
     def add_module(self, rule):
         module = self.node
         module._update_by_compound_rule(rule)
         self.pruning_node.modules[rule.name] = module
+
     def add_type(self, rule):
         _type = self.node
         _type._update_by_compound_rule(rule)
         self.pruning_node.types[rule.name] = _type
+
     def add(self):
         self.pruning_node._add_item(self.node)  
+
     def remove(self):
         self.pruning_node._remove_item(self.node) 
                     
@@ -270,23 +292,28 @@ class TreeNode(object):
                 self.remove_actions['t.*'] = self._remove_all_types 
             #update cache
             if is_add_all:
-                self._add_all()   
+                self._add_all() 
+
     def prune(self):
-        return self.node            
+        return self.node   
+         
     def _update_by_compound_rule(self, rule):
         assert(isinstance(rule, CompoundRule))
         self.new_name = rule.new_name
         for sub in rule.subrules:
             self.execute_rule(sub)
+
     def execute_rules(self, rules):
         for rule in rules:
             self.execute_rule(rule)
+
     def execute_rule(self, rule):
         action = self.keyword_actions.get(rule.keyword)
         if not action:
             raise Exception("keyword not supported in type, file '%s' line_no %d" % \
                             (rule.path, rule.line_no))
         action(rule)
+
     def _keyword_module(self, rule):
         module = self._cache_modules.get(rule.name)
         if not module:
@@ -294,6 +321,7 @@ class TreeNode(object):
                             (rule.name, rule.path, rule.line_no))
         module._update_by_compound_rule(rule)
         self.modules[rule.name] = module
+
     def _keyword_type(self, rule):
         _type = self._cache_types.get(rule.name)
         if not _type:
@@ -301,6 +329,7 @@ class TreeNode(object):
                             (rule.name, rule.path, rule.line_no))
         _type._update_by_compound_rule(rule)
         self.types[rule.name] = _type
+
     def _keyword_add(self, rule):
         for name in rule.identifiers:
             if name in self.add_actions:
@@ -311,6 +340,7 @@ class TreeNode(object):
                 raise Exception("member '%s' not exists, file '%s', line_no %d" %\
                                 (name, rule.path, rule.line_no))
             self._add_item(item)
+
     def _keyword_remove(self, rule):
         for name in rule.identifiers:
             if name in self.remove_actions:
@@ -321,6 +351,7 @@ class TreeNode(object):
                 raise Exception("member '%s' not exists, file '%s', line_no %d" %\
                                 (name, rule.path, rule.line_no))
             self._remove_item(item)
+
     def _add_all(self):
         self.modules.update(self._cache_modules)
         self.programs.update(self._cache_programs)
@@ -328,20 +359,28 @@ class TreeNode(object):
         self.procedures.update(self._cache_procedures)
         self.interfaces.update(self._cache_interfaces)
         self.types.update(self._cache_types)
+
     def _add_all_modules(self):
         self.modules.update(self._cache_modules)
+
     def _add_all_programs(self):
         self.programs.update(self._cache_programs)
+
     def _add_all_elements(self):
         self.elements.update(self._cache_elements)
+
     def _add_all_procedures(self):
         self.procedures.update(self._cache_procedures)
+
     def _add_all_interfaces(self):
         self.interfaces.update(self._cache_interfaces)
+
     def _add_all_types(self):
         self.types.update(self._cache_types)
+
     def _add_item(self, node):
         self._nodes_by_type[node.__class__][node.orig_name] = node
+
     def _remove_all(self):
         self.modules.clear()
         self.programs.clear()
@@ -349,18 +388,25 @@ class TreeNode(object):
         self.procedures.clear()
         self.interfaces.clear()
         self.types.clear()
+
     def _remove_all_modules(self):
         self.modules.clear()
+
     def _remove_all_programs(self):
         self.programs.clear()
+
     def _remove_all_elements(self):
         self.elements.clear()
+
     def _remove_all_procedures(self):
         self.procedures.clear()
+
     def _remove_all_interfaces(self):
         self.interfaces.clear()
+
     def _remove_all_types(self):
         self.types.clear()
+
     def _remove_item(self, node):
         cache = self._nodes_by_type[node.__class__]
         if node.orig_name in cache:
@@ -372,7 +418,8 @@ class RootNode(TreeNode):
         TreeNode.__init__(self, node, {Module: node.modules,
                                         Program : node.programs, 
                                         Procedure : node.procedures
-                                        }, is_add_all) 
+                                        }, is_add_all)
+
     def prune(self):
         self.node.modules[:] = [bb.prune() for bb in self.modules.values()]
         self.node.programs[:] = self.programs.values()
@@ -386,6 +433,7 @@ class ModuleNode(TreeNode):
                                         Interface : node.interfaces, 
                                         Procedure : node.procedures}, is_add_all)
         self.orig_name = node.orig_name
+
     def prune(self):
         self.node.elements[:] = self.elements.values()
         self.node.interfaces[:] = self.interfaces.values()
@@ -399,6 +447,7 @@ class TypeNode(TreeNode):
                                         Interface : node.interfaces, 
                                         Procedure : node.procedures}, is_add_all)
         self.orig_name = node.orig_name
+
     def prune(self):
         self.node.elements[:] = self.elements.values()
         self.node.interfaces[:] = self.interfaces.values()
@@ -431,6 +480,7 @@ class AtomicRule(PruningRule):
     def __init__(self, path, line_no, indent, keyword, identifiers):
         PruningRule.__init__(self, path, line_no, indent, keyword)
         self.identifiers = identifiers
+
     def __str__(self):
         return '(%s)%s %s %s' % (self.line_no, 
                                     '----'*self.indent, 
@@ -442,8 +492,10 @@ class CompoundRule(PruningRule):
         self.name = name
         self.new_name = new_name
         self.subrules = []
+
     def add_rule(self, rule):
         self.subrules.append(rule)
+
     def __str__(self):
         new_name = (' -> %s' % self.new_name) if self.new_name else ''
         return '(%s)%s %s %s%s:\n%s' % (self.line_no, 
@@ -462,6 +514,7 @@ class PruningRuleFile(object):
         self.line_no = 0
         self.indent = 0
         self.indent_blanks = [0]
+
     def __readline(self):
         while True:
             line = self.fp.readline()
@@ -480,6 +533,7 @@ class PruningRuleFile(object):
                     line = line[:len(line)-1] + _line
                 break
         return line_no, line
+
     def __get_indent(self, line):
         line_no = self.line_no
         temp = re.match(pat_indent, line)
@@ -561,6 +615,7 @@ class PruningRuleFile(object):
                           % (identifier, self.path, line_no))
             identifiers.append(identifier)
         return AtomicRule(self.path, line_no, indent, keyword, identifiers)
+
     def read_rules(self):
         res = []
         blocks = []
@@ -593,6 +648,7 @@ class PruningRuleFile(object):
                 current_block = rule
                 blocks.append(rule)  
         return res
+
     def dump(self):
         rules = self.read_rules()
         print('\n'.join([str(bb) for bb in rules]))

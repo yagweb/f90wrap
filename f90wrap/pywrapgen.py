@@ -135,7 +135,7 @@ def format_doc_string(node):
 class PythonWrapperGenerator(ft.FortranVisitor, cg.CodeGenerator):
     def __init__(self, prefix, mod_name, types, f90_mod_name=None,
                  make_package=False, kind_map=None, init_file=None,
-                 py_mod_names=None, class_names=None):
+                 py_mod_names=None, class_names=None, dest = '.'):
         cg.CodeGenerator.__init__(self, indent=' ' * 4,
                                max_length=80,
                                continuation='\\',
@@ -155,6 +155,14 @@ class PythonWrapperGenerator(ft.FortranVisitor, cg.CodeGenerator):
             kind_map = {}
         self.kind_map = kind_map
         self.init_file = init_file
+        self.dest = os.path.abspath(dest)
+        if not os.path.exists(dest):
+            os.mkdir(dest)
+    
+    def open_file(self, name, mode):
+        path = os.path.join(self.dest, name)
+        _file = open(path, mode)
+        return _file        
 
     def write_imports(self, insert=0):
         default_imports = [(self.f90_mod_name, None),
@@ -178,8 +186,9 @@ class PythonWrapperGenerator(ft.FortranVisitor, cg.CodeGenerator):
         Wrap subroutines and functions that are outside of any Fortran modules
         """
         if self.make_package:
-            if not os.path.exists(self.py_mod_name):
-                os.mkdir(self.py_mod_name)
+            package_path = os.path.join(self.dest, self.py_mod_name)
+            if not os.path.exists(package_path):
+                os.mkdir(package_path)
 
         self.code = []
         self.py_mods = []
@@ -194,9 +203,9 @@ class PythonWrapperGenerator(ft.FortranVisitor, cg.CodeGenerator):
         self.write_imports(0)
 
         if self.make_package:
-            py_wrapper_file = open(os.path.join(self.py_mod_name, '__init__.py'), 'w')
+            py_wrapper_file = self.open_file(os.path.join(self.py_mod_name, '__init__.py'), 'w')
         else:
-            py_wrapper_file = open('%s.py' % self.py_mod_name, 'w')
+            py_wrapper_file = self.open_file('%s.py' % self.py_mod_name, 'w')
         py_wrapper_file.write(str(self))
         if self.init_file is not None:
             py_wrapper_file.write(open(self.init_file).read())
@@ -264,7 +273,7 @@ except ValueError:
             ''')
             if len(self.code) > 0:
                 py_mod_name = self.py_mod_names.get(node.name, node.name)
-                py_wrapper_file = open(os.path.join(self.py_mod_name, py_mod_name + '.py'), 'w')
+                py_wrapper_file = self.open_file(os.path.join(self.py_mod_name, py_mod_name + '.py'), 'w')
                 py_wrapper_file.write(str(self))
                 py_wrapper_file.close()
                 self.py_mods.append(node.name)

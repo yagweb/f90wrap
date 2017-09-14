@@ -35,10 +35,12 @@ def compile_lib(files):
     print(cmd)
     os.system(cmd)
 
-def test_generator(files):   
+def gene_wrap_files(files):   
     import sys
     sys.argv.extend(files)
     sys.argv.extend(["-m", "demo"])
+    sys.argv.extend(["--fdest", "tmp"])
+    sys.argv.extend(["--pydest", "."])
     sys.argv.extend(["-p", "f90wrap_"])
     sys.argv.extend(["-k", "kind_map"])
     sys.argv.extend(["-r", "pruning_rules"])
@@ -49,10 +51,10 @@ def compile_ext():
     import platform
     sysstr = platform.system()
     if(sysstr == "Windows"):
-        files = glob.glob('f90wrap_*.f90')#windows cmd not support wildcard
+        files = glob.glob('tmp/f90wrap_*.f90')#windows cmd not support wildcard
         cc = '--compiler=mingw32'
     else:
-        files = 'f90wrap_*.f90'
+        files = 'tmp/f90wrap_*.f90'
         cc = ''
     mod_name = "_demo"
     f2py = os.path.abspath("../../scripts/f2py-f90wrap")
@@ -64,16 +66,19 @@ def compile_ext():
 
 def test():
     import demo
-    print(dir(demo))
+    b = 1
+    a = demo.entity.hello()
+    print(a)
+    a = demo.entity.hello2(10)
+    print(a)
     
 if __name__ == "__main__":
 #    test_parser()
     files = [
-             '../arrayderivedtypes/test.f90',
-             '../arrays/parameters.f90',
-             '../arrays/library.f90',
+             'entity.f90',
+             'test.f90',
             ]
 #    compile_lib(files)
-#    test_generator(files)
+#    gene_wrap_files(files)
 #    compile_ext()
     test()

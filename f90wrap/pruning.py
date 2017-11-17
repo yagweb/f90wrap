@@ -336,6 +336,7 @@ class TreeNode(object):
                 self.add_actions[name]()
                 continue
             item = self._cache_items.get(name)
+            print(self._cache_items)
             if not item:
                 raise Exception("member '%s' not exists, file '%s', line_no %d" %\
                                 (name, rule.path, rule.line_no))

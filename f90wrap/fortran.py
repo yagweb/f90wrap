@@ -813,6 +813,7 @@ def normalise_type(typename, kind_map):
         return type
     c_type = f2c_type(typename, kind_map)
     c_type_to_fortran_kind = {
+        '_Bool' : '(1)',
         'char' : '',
         'signed_char' : '',
         'short' : '(2)',

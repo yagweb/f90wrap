@@ -43,7 +43,7 @@ def gene_wrap_files(files):
     sys.argv.extend(["--pydest", "."])
     sys.argv.extend(["-p", "f90wrap_"])
     sys.argv.extend(["-k", "kind_map"])
-    sys.argv.extend(["-r", "pruning_rules"])
+#    sys.argv.extend(["-r", "pruning_rules"])
     main()
         
 def compile_ext():
@@ -70,15 +70,33 @@ def test():
     a = demo.entity.hello()
     print(a)
     a = demo.entity.hello2(10)
+    print(a) 
+    print(dir(demo.logical_test))
+    a = demo.logical_test(1)
     print(a)
+    
+def test_kind():
+    kind_map = eval(open('kind_map').read())
+    from f90wrap.fortran import normalise_type, f2py_type, f2c_type
+    _type = 'real(dp)'.lower()
+    _type = 'LOGICAL(C_BOOL)'.lower()
+    print(_type)
+    aa = normalise_type(_type.lower(), kind_map)
+    print(aa)    
+    aa = f2py_type(_type.lower(), kind_map)
+    print(aa)    
+    aa = f2c_type(_type.lower(), kind_map)
+    print(aa)    
     
 if __name__ == "__main__":
 #    test_parser()
     files = [
              'entity.f90',
              'test.f90',
+             'routine.f90',
             ]
 #    compile_lib(files)
 #    gene_wrap_files(files)
 #    compile_ext()
-    test()
+#    test()
+    test_kind()

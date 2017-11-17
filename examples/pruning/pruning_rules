@@ -2,6 +2,7 @@ private p.*, t.*
 
 top:
     private prog.*
+    public logical_test
 
 module entity:
     public p.*

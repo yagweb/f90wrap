@@ -10,5 +10,6 @@
  'integer' : {'4': 'int',
 	          '8': 'long_long',
 	          'dp': 'long_long' },
+ 'logical' : {'c_bool': '_Bool'},
  'character' : {'': 'char'}
 }
